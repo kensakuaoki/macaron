@@ -13,8 +13,12 @@ npm install
 ```
 TWITTER_CONSUMER_KEY=xxxx TWITTER_CONSUMER_SECRET=xxxx \
 INSTAGRAM_CLIENT_ID=xxxx INSTAGRAM_CLIENT_SECRET=xxxx \
+MONGODB_URI=mongodb://localhost/test \
 SESSION_SECRET=secret npm start
 ```
+
+MongoDB は `mongoose` を用いて接続します。`MONGODB_URI` には Atlas などで
+取得した接続文字列を指定してください。
 
 `/api/items` でグッズ情報の登録と取得が可能です。
 

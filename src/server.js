@@ -1,8 +1,17 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
+const mongoose = require('mongoose');
 const TwitterStrategy = require('passport-twitter').Strategy;
 const InstagramStrategy = require('passport-instagram').Strategy;
+const Item = require('./models/Item');
+
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => console.log('MongoDB connected'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 const app = express();
 
@@ -56,10 +65,6 @@ app.get('/auth/instagram/callback', passport.authenticate('instagram', { failure
     res.redirect('/');
   });
 
-// Simple in-memory item store
-const items = [];
-let idCounter = 1;
-
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
@@ -68,21 +73,24 @@ function ensureAuthenticated(req, res, next) {
 }
 
 // Add item
-app.post('/api/items', ensureAuthenticated, (req, res) => {
-  const item = {
-    id: idCounter++,
-    user: req.user.username || req.user.id,
-    type: req.body.type, // give or want
-    name: req.body.name,
-    category: req.body.category,
-    tags: req.body.tags || [],
-  };
-  items.push(item);
-  res.json(item);
+app.post('/api/items', ensureAuthenticated, async (req, res) => {
+  try {
+    const item = await Item.create({
+      user: req.user.username || req.user.id,
+      type: req.body.type,
+      name: req.body.name,
+      category: req.body.category,
+      tags: req.body.tags || [],
+    });
+    res.json(item);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // List items
-app.get('/api/items', (req, res) => {
+app.get('/api/items', async (req, res) => {
+  const items = await Item.find().exec();
   res.json(items);
 });
 
